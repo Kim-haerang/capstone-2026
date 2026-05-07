@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>스마트 얼룩 제거기 - 개발자 화면</title>
+  <style>
+    :root {
+      --bg: #020617;
+      --panel: rgba(15, 23, 42, 0.96);
+      --line: #334155;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --soft: #0b1220;
+      --card: #111827;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .wrap {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+      min-height: 100vh;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+
+    .panel-header {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.45;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      border: 1px solid var(--line);
+      background: #0b1220;
+      color: var(--muted);
+    }
+
+    .badge.ok { color: #86efac; border-color: #166534; }
+    .badge.busy { color: #fde68a; border-color: #92400e; }
+    .badge.error { color: #fecaca; border-color: #991b1b; }
+
+    .main-preview {
+      position: relative;
+      aspect-ratio: 4 / 3;
+      background: #000;
+      overflow: hidden;
+    }
+
+    .main-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+      background: #000;
+    }
+
+    .main-placeholder {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+      padding: 24px;
+      line-height: 1.6;
+      background: radial-gradient(circle at top, rgba(56,189,248,0.12), transparent 45%), #020617;
+    }
+
+    .guide-box {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 56%;
+      height: 56%;
+      transform: translate(-50%, -50%);
+      border: 3px solid rgba(56,189,248,0.85);
+      border-radius: 16px;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.16);
+      pointer-events: none;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 16px 18px 18px;
+      border-top: 1px solid var(--line);
+      background: rgba(15, 23, 42, 0.78);
+    }
+
+    button, .link-btn {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      color: white;
+      background: #334155;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button.primary, .link-btn.primary { background: var(--ok); color: #052e16; }
+    button.secondary, .link-btn.secondary { background: var(--accent); color: #082f49; }
+    button.warn { background: var(--warn); color: #451a03; }
+    button.danger { background: var(--danger); color: #fff; }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 16px 18px 18px;
+      background: var(--soft);
+    }
+
+    .shot-card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--card);
+    }
+
+    .shot-label {
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .shot-wrap {
+      aspect-ratio: 4 / 3;
+      background: #020617;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 13px;
+      overflow: hidden;
+    }
+
+    .shot-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .right {
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .section {
+      padding: 16px 18px 18px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .mini-card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--soft);
+      padding: 14px;
+    }
+
+    .mini-title {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .mini-value {
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+
+    .mini-desc {
+      margin-top: 8px;
+      color: #cbd5e1;
+      font-size: 13px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .item {
+      border: 1px solid var(--line);
+      background: var(--soft);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 14px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .pill-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: #172554;
+      color: #bfdbfe;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .json-box, .log-box {
+      background: #020617;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: #cbd5e1;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow: auto;
+      max-height: 320px;
+    }
+
+    .log-box div {
+      border-bottom: 1px dashed rgba(51,65,85,0.6);
+      padding: 6px 0;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 18px 12px;
+      background: var(--panel);
+    }
+
+    .tab-btn {
+      border: 1px solid var(--line);
+      background: #0b1220;
+      color: var(--muted);
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      color: #e0f2fe;
+      border-color: #0ea5e9;
+      background: rgba(14,165,233,0.12);
+    }
+
+    .tab-panel {
+      display: none;
+      padding: 0 18px 18px;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .footer-note {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 1080px) {
+      .wrap { grid-template-columns: 1fr; }
+      .grid-2, .split { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="title">스마트 얼룩 제거기 - 개발자 화면</div>
+          <div class="sub">분석 결과, OCR, CNN, Top3, 원시 응답, 실행 로그를 상세하게 확인합니다.</div>
+        </div>
+        <div id="cameraBadge" class="badge">카메라 대기</div>
+      </div>
+
+      <div class="main-preview">
+        <img id="liveFeed" alt="실시간 카메라 화면" />
+        <div id="mainPlaceholder" class="main-placeholder">
+          아직 연결하지 않았습니다.<br>
+          카메라 연결 확인 버튼을 누르면 실시간 화면이 뜹니다.
+        </div>
+        <div class="guide-box"></div>
+      </div>
+
+      <div class="controls">
+        <button id="testCameraBtn" class="primary">카메라 연결 확인</button>
+        <button id="captureStainBtn" class="secondary">얼룩 촬영</button>
+        <button id="captureTagBtn" class="secondary">택 촬영</button>
+        <button id="analyzeBtn" class="warn" disabled>분석 시작</button>
+        <button id="executeBtn" disabled>모터 실행</button>
+        <button id="resetBtn" class="danger">초기화</button>
+        <a href="/" class="link-btn secondary">사용자 화면</a>
+      </div>
+
+      <div class="split">
+        <div class="shot-card">
+          <div class="shot-label">얼룩 사진</div>
+          <div class="shot-wrap">
+            <img id="stainPreview" alt="얼룩 사진" />
+            <span id="stainPlaceholder">아직 촬영하지 않음</span>
+          </div>
+        </div>
+        <div class="shot-card">
+          <div class="shot-label">택 사진</div>
+          <div class="shot-wrap">
+            <img id="tagPreview" alt="택 사진" />
+            <span id="tagPlaceholder">아직 촬영하지 않음</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="right">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="title">분석 요약</div>
+            <div class="sub">최종 결과와 핵심 내부 값을 한 번에 봅니다.</div>
+          </div>
+          <div id="analysisBadge" class="badge">분석 전</div>
+        </div>
+
+        <div class="section">
+          <div class="grid-2">
+            <div class="mini-card">
+              <div class="mini-title">최종 오염 소스</div>
+              <div id="sourceValue" class="mini-value">-</div>
+              <div id="sourceDesc" class="mini-desc">분석 전입니다.</div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-title">최종 신뢰도</div>
+              <div id="confidenceValue" class="mini-value">-</div>
+              <div id="confidenceDesc" class="mini-desc">-</div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-title">CNN 클래스</div>
+              <div id="cnnClassValue" class="mini-value">-</div>
+              <div id="cnnConfidenceValue" class="mini-desc">CNN confidence: -</div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-title">재질 그룹</div>
+              <div id="materialGroupValue" class="mini-value">-</div>
+              <div id="materialReasonValue" class="mini-desc">-</div>
+            </div>
+          </div>
+          <div class="footer-note" id="statusText">대기 중</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="title">상세 데이터</div>
+            <div class="sub">탭별로 디버깅 정보를 나눠서 봅니다.</div>
+          </div>
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="decisionTab">Decision</button>
+          <button class="tab-btn" data-tab="top3Tab">Top3</button>
+          <button class="tab-btn" data-tab="ocrTab">OCR</button>
+          <button class="tab-btn" data-tab="treatmentTab">Treatment</button>
+          <button class="tab-btn" data-tab="rawTab">Raw JSON</button>
+        </div>
+
+        <div id="decisionTab" class="tab-panel active">
+          <div class="list">
+            <div class="item">
+              <strong>reason</strong><br>
+              <span id="reasonText">아직 분석하지 않았습니다.</span>
+            </div>
+            <div class="item">
+              <strong>evidence</strong>
+              <div id="evidenceList" class="pill-wrap" style="margin-top:10px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="top3Tab" class="tab-panel">
+          <div id="top3List" class="list">
+            <div class="item">아직 분석하지 않았습니다.</div>
+          </div>
+        </div>
+
+        <div id="ocrTab" class="tab-panel">
+          <div class="list">
+            <div class="item">
+              <strong>OCR preview</strong>
+              <div id="ocrPreviewList" class="pill-wrap" style="margin-top:10px;"></div>
+            </div>
+            <div class="item">
+              <strong>OCR debug files</strong>
+              <div id="ocrDebugList" class="pill-wrap" style="margin-top:10px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="treatmentTab" class="tab-panel">
+          <div class="list">
+            <div class="item"><strong>detergent</strong><br><span id="detergentValue">-</span></div>
+            <div class="item"><strong>brush_intensity</strong><br><span id="brushValue">-</span></div>
+            <div class="item"><strong>pump_ms</strong><br><span id="pumpValue">-</span></div>
+            <div class="item"><strong>brush_ms</strong><br><span id="brushMsValue">-</span></div>
+            <div class="item"><strong>summary</strong><br><span id="treatmentSummary">-</span></div>
+          </div>
+        </div>
+
+        <div id="rawTab" class="tab-panel">
+          <div id="rawJsonBox" class="json-box">아직 분석하지 않았습니다.</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="title">실행 로그</div>
+            <div class="sub">촬영, 분석, 제어 이벤트를 기록합니다.</div>
+          </div>
+        </div>
+        <div class="section">
+          <div id="logBox" class="log-box"></div>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <script>
+    const API_BASE = `${location.protocol}//${location.hostname}:8000`;
+
+    const state = {
+      stainImage: null,
+      tagImage: null,
+      analysis: null,
+      busy: false,
+      cameraConnected: false
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function log(message) {
+      const item = document.createElement("div");
+      item.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      $("logBox").prepend(item);
+    }
+
+    function setBadge(el, kind, text) {
+      el.textContent = text;
+      el.className = "badge";
+      if (kind) el.classList.add(kind);
+    }
+
+    function refreshCameraBadge() {
+      if (state.cameraConnected) {
+        setBadge($("cameraBadge"), "ok", "카메라 연결됨");
+      } else {
+        setBadge($("cameraBadge"), "", "카메라 대기");
+      }
+    }
+
+    function setBusy(isBusy, message = "") {
+      state.busy = isBusy;
+      $("testCameraBtn").disabled = isBusy;
+      $("captureStainBtn").disabled = isBusy || !state.cameraConnected;
+      $("captureTagBtn").disabled = isBusy || !state.cameraConnected;
+      $("analyzeBtn").disabled = isBusy || !state.stainImage || !state.tagImage;
+      $("executeBtn").disabled = isBusy || !state.analysis;
+      if (message) $("statusText").textContent = message;
+    }
+
+    function startLiveFeed() {
+      const img = $("liveFeed");
+      img.onload = () => {
+        $("mainPlaceholder").style.display = "none";
+        img.style.display = "block";
+        state.cameraConnected = true;
+        refreshCameraBadge();
+        $("captureStainBtn").disabled = state.busy;
+        $("captureTagBtn").disabled = state.busy;
+        $("statusText").textContent = "실시간 카메라 연결 완료";
+      };
+      img.onerror = () => {
+        state.cameraConnected = false;
+        refreshCameraBadge();
+        $("statusText").textContent = "실시간 비디오 로드 실패";
+      };
+      img.src = `${API_BASE}/api/video_feed?ts=${Date.now()}`;
+    }
+
+    function stopLiveFeed() {
+      const img = $("liveFeed");
+      img.onload = null;
+      img.onerror = null;
+      img.removeAttribute("src");
+      img.style.display = "none";
+      $("mainPlaceholder").style.display = "grid";
+      state.cameraConnected = false;
+      refreshCameraBadge();
+    }
+
+    function renderShot(type, imageUrl) {
+      if (type === "stain") {
+        state.stainImage = imageUrl;
+        $("stainPreview").src = imageUrl;
+        $("stainPreview").style.display = "block";
+        $("stainPlaceholder").style.display = "none";
+      } else {
+        state.tagImage = imageUrl;
+        $("tagPreview").src = imageUrl;
+        $("tagPreview").style.display = "block";
+        $("tagPlaceholder").style.display = "none";
+      }
+      $("analyzeBtn").disabled = state.busy || !state.stainImage || !state.tagImage;
+    }
+
+    function confidenceText(v) {
+      if (v >= 0.9) return "매우 높음";
+      if (v >= 0.75) return "높음";
+      if (v >= 0.5) return "보통";
+      return "낮음";
+    }
+
+    function renderPills(containerId, items, emptyText = "-") {
+      const el = $(containerId);
+      el.innerHTML = "";
+      if (!items || !items.length) {
+        const pill = document.createElement("span");
+        pill.className = "pill";
+        pill.textContent = emptyText;
+        el.appendChild(pill);
+        return;
+      }
+      items.forEach((item) => {
+        const pill = document.createElement("span");
+        pill.className = "pill";
+        pill.textContent = String(item);
+        el.appendChild(pill);
+      });
+    }
+
+    function renderTop3(list = []) {
+      const box = $("top3List");
+      box.innerHTML = "";
+      if (!list.length) {
+        box.innerHTML = `<div class="item">Top3 정보가 없습니다.</div>`;
+        return;
+      }
+      list.forEach((item) => {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+          <strong>rank ${item.rank ?? "-"}</strong><br>
+          class_name: ${item.class_name ?? "-"}<br>
+          source: ${item.source ?? "-"}<br>
+          source_display: ${item.source_display ?? "-"}<br>
+          confidence: ${item.confidence != null ? Number(item.confidence).toFixed(4) : "-"}
+        `;
+        box.appendChild(div);
+      });
+    }
+
+    function renderAnalysis(result) {
+      const conf = Number(result.confidence || 0);
+      const cnnConf = Number(result.cnn_confidence || 0);
+
+      $("sourceValue").textContent = `${result.source_display || "-"} (${result.source || "-"})`;
+      $("sourceDesc").textContent = result.source || "-";
+
+      $("confidenceValue").textContent = result.confidence != null
+        ? `${Math.round(conf * 100)}%`
+        : "-";
+      $("confidenceDesc").textContent = conf > 0 ? confidenceText(conf) : "-";
+
+      $("cnnClassValue").textContent = result.cnn_class || "-";
+      $("cnnConfidenceValue").textContent = result.cnn_confidence != null
+        ? `CNN confidence: ${cnnConf.toFixed(4)}`
+        : "CNN confidence: -";
+
+      $("materialGroupValue").textContent = result.material_group || "-";
+      $("materialReasonValue").textContent = result.material_reason || "-";
+
+      $("reasonText").textContent = result.reason || "-";
+      renderPills("evidenceList", result.evidence || [], "evidence 없음");
+
+      renderTop3(result.tflite_top3 || []);
+      renderPills("ocrPreviewList", result.ocr_text_preview || [], "OCR preview 없음");
+      renderPills("ocrDebugList", result.ocr_debug_files || [], "OCR debug file 없음");
+
+      $("detergentValue").textContent = result.detergent || "-";
+      $("brushValue").textContent = result.treatment?.brush_intensity || "-";
+      $("pumpValue").textContent = result.treatment?.pump_ms != null ? `${result.treatment.pump_ms} ms` : "-";
+      $("brushMsValue").textContent = result.treatment?.brush_ms != null ? `${result.treatment.brush_ms} ms` : "-";
+      $("treatmentSummary").textContent = result.treatment?.summary || "-";
+
+      $("rawJsonBox").textContent = JSON.stringify(result, null, 2);
+    }
+
+    async function fetchJson(url, options = {}) {
+      const res = await fetch(url, options);
+      const text = await res.text();
+      let data = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = { detail: text || "응답 파싱 실패" };
+      }
+      if (!res.ok) throw new Error(data.detail || "요청 실패");
+      return data;
+    }
+
+    async function testCamera() {
+      setBusy(true, "카메라 연결 확인 중...");
+      setBadge($("cameraBadge"), "busy", "카메라 확인 중");
+      log("카메라 연결 확인 요청");
+
+      try {
+        const health = await fetchJson(`${API_BASE}/api/health`);
+        if (!health.ok) throw new Error("백엔드 응답 이상");
+        startLiveFeed();
+        log(`실시간 카메라 연결 시작 / tflite_ok=${health.tflite_ok}`);
+      } catch (err) {
+        state.cameraConnected = false;
+        setBadge($("cameraBadge"), "error", "카메라 오류");
+        $("statusText").textContent = `카메라 오류: ${err.message}`;
+        log(`카메라 오류: ${err.message}`);
+        alert(`카메라 연결 실패: ${err.message}`);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function capture(type) {
+      const label = type === "stain" ? "얼룩" : "택";
+      setBusy(true, `${label} 사진 촬영 중...`);
+      setBadge($("cameraBadge"), "busy", `${label} 촬영 중`);
+      log(`${label} 촬영 요청`);
+
+      try {
+        const data = await fetchJson(`${API_BASE}/api/capture`);
+        if (!data.image) throw new Error("촬영 이미지가 없습니다.");
+
+        renderShot(type, data.image);
+        state.cameraConnected = true;
+        refreshCameraBadge();
+        $("statusText").textContent = `${label} 촬영 완료`;
+        log(`${label} 촬영 완료`);
+      } catch (err) {
+        setBadge($("cameraBadge"), "error", "카메라 오류");
+        $("statusText").textContent = `${label} 촬영 실패: ${err.message}`;
+        log(`${label} 촬영 실패: ${err.message}`);
+        alert(`${label} 촬영 실패: ${err.message}`);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function analyze() {
+      if (!state.stainImage || !state.tagImage) {
+        alert("얼룩 사진과 택 사진을 먼저 촬영하세요.");
+        return;
+      }
+
+      setBusy(true, "분석 요청 중...");
+      setBadge($("analysisBadge"), "busy", "분석 중");
+      log("분석 요청 시작");
+
+      try {
+        const result = await fetchJson(`${API_BASE}/api/analyze`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            stain_image: state.stainImage,
+            tag_image: state.tagImage
+          })
+        });
+
+        state.analysis = result;
+        renderAnalysis(result);
+        setBadge($("analysisBadge"), "ok", "분석 완료");
+        $("statusText").textContent = "분석 완료";
+        $("executeBtn").disabled = false;
+        log(`분석 완료: source=${result.source} / cnn_class=${result.cnn_class} / material_group=${result.material_group}`);
+      } catch (err) {
+        state.analysis = null;
+        setBadge($("analysisBadge"), "error", "분석 실패");
+        $("statusText").textContent = `분석 실패: ${err.message}`;
+        $("executeBtn").disabled = true;
+        $("rawJsonBox").textContent = `분석 실패\n${err.message}`;
+        log(`분석 실패: ${err.message}`);
+        alert(`분석 실패: ${err.message}`);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function executeMotor() {
+      if (!state.analysis) {
+        alert("분석을 먼저 실행하세요.");
+        return;
+      }
+
+      setBusy(true, "모터 실행 중...");
+      log(`모터 실행 요청: pump=${state.analysis.treatment.pump_ms}ms / brush=${state.analysis.treatment.brush_ms}ms / intensity=${state.analysis.treatment.brush_intensity}`);
+
+      try {
+        await fetchJson(`${API_BASE}/api/execute`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(state.analysis.treatment)
+        });
+
+        $("statusText").textContent = "모터 실행 완료";
+        log("모터 실행 완료");
+        alert("모터 실행 완료");
+      } catch (err) {
+        $("statusText").textContent = `모터 실행 실패: ${err.message}`;
+        log(`모터 실행 실패: ${err.message}`);
+        alert(`모터 실행 실패: ${err.message}`);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function resetAll() {
+      state.stainImage = null;
+      state.tagImage = null;
+      state.analysis = null;
+
+      $("stainPreview").removeAttribute("src");
+      $("tagPreview").removeAttribute("src");
+      $("stainPreview").style.display = "none";
+      $("tagPreview").style.display = "none";
+      $("stainPlaceholder").style.display = "block";
+      $("tagPlaceholder").style.display = "block";
+
+      $("sourceValue").textContent = "-";
+      $("sourceDesc").textContent = "분석 전입니다.";
+      $("confidenceValue").textContent = "-";
+      $("confidenceDesc").textContent = "-";
+      $("cnnClassValue").textContent = "-";
+      $("cnnConfidenceValue").textContent = "CNN confidence: -";
+      $("materialGroupValue").textContent = "-";
+      $("materialReasonValue").textContent = "-";
+      $("reasonText").textContent = "아직 분석하지 않았습니다.";
+      $("detergentValue").textContent = "-";
+      $("brushValue").textContent = "-";
+      $("pumpValue").textContent = "-";
+      $("brushMsValue").textContent = "-";
+      $("treatmentSummary").textContent = "-";
+
+      renderPills("evidenceList", [], "evidence 없음");
+      renderPills("ocrPreviewList", [], "OCR preview 없음");
+      renderPills("ocrDebugList", [], "OCR debug file 없음");
+      $("top3List").innerHTML = `<div class="item">아직 분석하지 않았습니다.</div>`;
+      $("rawJsonBox").textContent = "아직 분석하지 않았습니다.";
+      $("statusText").textContent = "대기 중";
+
+      $("analyzeBtn").disabled = true;
+      $("executeBtn").disabled = true;
+
+      setBadge($("analysisBadge"), "", "분석 전");
+      stopLiveFeed();
+      log("초기화 완료");
+    }
+
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+        document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+        btn.classList.add("active");
+        $(btn.dataset.tab).classList.add("active");
+      });
+    });
+
+    $("testCameraBtn").addEventListener("click", testCamera);
+    $("captureStainBtn").addEventListener("click", () => capture("stain"));
+    $("captureTagBtn").addEventListener("click", () => capture("tag"));
+    $("analyzeBtn").addEventListener("click", analyze);
+    $("executeBtn").addEventListener("click", executeMotor);
+    $("resetBtn").addEventListener("click", resetAll);
+  </script>
+</body>
+</html>

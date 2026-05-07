@@ -1,0 +1,1 @@
+Place stain_classifier_v3.tflite and class_names.txt in this folder.
