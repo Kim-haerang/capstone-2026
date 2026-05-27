@@ -1,8 +1,0 @@
-fastapi
-uvicorn
-opencv-python
-numpy
-pytesseract
-openai
-requests
-RPi.GPIO

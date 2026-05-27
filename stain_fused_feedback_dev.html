@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스마트 얼룩 제거기 - 개발자 화면</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;background:#F2FAFF;color:#12314A}
+.wrap{max-width:1180px;margin:0 auto;padding:22px;display:grid;gap:16px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+h1{margin:0;font-size:30px;color:#145F93}
+.sub{margin-top:6px;color:#5A7D94;font-weight:750;line-height:1.45}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.panel{background:#fff;border:1.5px solid #CFEAF8;border-radius:16px;padding:16px;box-shadow:0 12px 28px rgba(76,169,222,.12)}
+.wide{grid-column:1/-1}
+h2{margin:0 0 12px;font-size:18px;color:#176B9E}
+.row{display:grid;grid-template-columns:150px 1fr;gap:10px;padding:9px 0;border-bottom:1px solid #E4F2FA}
+.row:last-child{border-bottom:0}
+.key{font-weight:900;color:#4E7B96}
+.val{font-weight:800;line-height:1.45;white-space:pre-wrap}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-bottom:1px solid #E4F2FA;padding:9px;text-align:left;vertical-align:top}
+th{color:#176B9E;background:#F4FBFF}
+ol{margin:0;padding-left:20px;display:grid;gap:8px;list-style:none}
+li{line-height:1.5;font-weight:760}
+.rule{display:grid;gap:8px;font-weight:800;color:#24465E}
+.rule span{display:block;padding:10px 12px;background:#F5FBFF;border:1px solid #D7EEF9;border-radius:10px}
+.log{display:grid;gap:6px;max-height:260px;overflow:auto}
+.log-item{padding:8px 10px;background:#F7FBFE;border:1px solid #DDEEF8;border-radius:8px;color:#466A80;font-size:13px}
+.shot-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.shot-card{border:1.5px solid #D7EEF9;border-radius:12px;overflow:hidden;background:#F7FCFF}
+.shot-head{padding:9px 11px;border-bottom:1px solid #DDEEF8;font-size:13px;font-weight:900;color:#2C6585}
+.shot-body{aspect-ratio:4/3;display:grid;place-items:center;background:#EEF7FC;position:relative}
+.shot-body img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+.shot-empty{font-size:12px;color:#7C9BB0;font-weight:800}
+.muted{color:#7EA1B6;font-weight:800}
+button{border:0;border-radius:12px;background:#40AEEA;color:#fff;font-weight:900;padding:10px 16px;cursor:pointer}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.row{grid-template-columns:1fr}.shot-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>개발자 화면</h1>
+      <div class="sub">CNN 평균값, TOP 후보 계열, 색감 기준을 발표용으로 확인하는 화면입니다.</div>
+    </div>
+  </div>
+
+  <section class="panel wide">
+    <h2>판단 기준</h2>
+    <div class="rule">
+      <span>후보 적합도는 최종 후보와의 색상/계열 연관성을 보기 위한 표시값이고, 1차·2차 칸은 각 촬영 CNN에서 실제로 나온 confidence입니다.</span>
+      <span>1차·2차 칸의 '후보 없음'은 해당 촬영의 CNN TOP 후보에 그 라벨이 없었다는 뜻입니다.</span>
+      <span>1차·2차 TOP1이 같고 평균 confidence가 85% 이상이면 CNN 결과를 그대로 사용합니다.</span>
+      <span>TOP 후보가 서로 다르면 색감과 후보 계열이 가까운 항목끼리 묶어 누적 근거를 비교합니다.</span>
+      <span>평균 confidence가 85% 미만이거나 1차·2차 TOP1의 계열이 다를 때 API 재판단을 사용합니다.</span>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>최종 결과</h2>
+      <div class="row"><div class="key">최종 라벨</div><div id="finalLabel" class="val">-</div></div>
+      <div class="row"><div class="key">판단 방식</div><div id="decisionSource" class="val">-</div></div>
+      <div class="row"><div class="key">판단 요약</div><div id="decisionSummary" class="val">-</div></div>
+      <div class="row"><div class="key">최종 신뢰도</div><div id="confidence" class="val">-</div></div>
+      <div class="row"><div class="key">시각 계열</div><div id="visualFamily" class="val">-</div></div>
+    </section>
+
+    <section class="panel">
+      <h2>입력/반응</h2>
+      <div class="row"><div class="key">현재 단계</div><div id="stageBadge" class="val">-</div></div>
+      <div class="row"><div class="key">CNN before</div><div id="beforeCnn" class="val">-</div></div>
+      <div class="row"><div class="key">CNN after</div><div id="afterCnn" class="val">-</div></div>
+      <div class="row"><div class="key">재질 그룹</div><div id="materialGroup" class="val">-</div></div>
+      <div class="row"><div class="key">재질 근거</div><div id="materialReason" class="val">-</div></div>
+      <div class="row"><div class="key">OCR 판독</div><div id="ocrVerdict" class="val">-</div></div>
+      <div class="row"><div class="key">반응 요약</div><div id="reaction" class="val">-</div></div>
+    </section>
+
+    <section class="panel wide">
+      <h2>촬영 이미지</h2>
+      <div class="shot-grid">
+        <div class="shot-card">
+          <div class="shot-head">1차 촬영</div>
+          <div class="shot-body">
+            <img id="devBeforeShot" alt="1차 촬영 이미지">
+            <span id="devBeforeShotEmpty" class="shot-empty">사진 없음</span>
+          </div>
+        </div>
+        <div class="shot-card">
+          <div class="shot-head">2차 촬영</div>
+          <div class="shot-body">
+            <img id="devAfterShot" alt="2차 촬영 이미지">
+            <span id="devAfterShotEmpty" class="shot-empty">사진 없음</span>
+          </div>
+        </div>
+        <div class="shot-card">
+          <div class="shot-head">세척 완료 촬영</div>
+          <div class="shot-body">
+            <img id="devFeedbackShot" alt="세척 완료 촬영 이미지">
+            <span id="devFeedbackShotEmpty" class="shot-empty">사진 없음</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel wide">
+      <h2>TOP 후보 상세</h2>
+      <table>
+        <thead><tr><th>순위</th><th>후보</th><th>후보 적합도</th><th>1차 CNN</th><th>2차 CNN</th></tr></thead>
+        <tbody id="topBody"></tbody>
+      </table>
+    </section>
+
+    <section class="panel wide">
+      <h2>계열별 누적 근거</h2>
+      <table>
+        <thead><tr><th>순위</th><th>계열</th><th>누적 점수</th><th>다음 계열 차이</th><th>포함 후보</th></tr></thead>
+        <tbody id="familyBody"></tbody>
+      </table>
+    </section>
+
+    <section class="panel wide">
+      <h2>선정 이유</h2>
+      <ol id="reasons"></ol>
+    </section>
+
+    <section class="panel wide">
+      <h2>OCR 원문 토큰</h2>
+      <div id="ocrPreview" class="val">-</div>
+    </section>
+
+    <section class="panel wide">
+      <h2>로그</h2>
+      <div id="logBox" class="log"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const KEY = 'stain_dev_state_v1';
+const $ = id => document.getElementById(id);
+function esc(value){return String(value ?? '-').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function pct(value){const n=Number(value || 0); return `${(n * 100).toFixed(1)}%`;}
+function scoreCell(value){
+  return value != null && Number.isFinite(Number(value)) ? esc(pct(value)) : '<span class="muted">후보 없음</span>';
+}
+function buildOcrVerdict(a){
+  if(!a || !a.material_reason) return '-';
+  if(a.material_input_mode === 'manual_select'){
+    return `수동 선택 -> ${a.material_group_display || a.material_group || '-'}`;
+  }
+  const reason = a.material_reason || '';
+  const keywordMatch = reason.match(/OCR에서\s+'?([^'\s]+)'?\s*재질/);
+  const keyword = keywordMatch ? keywordMatch[1] : '';
+  const group = a.material_group_display || a.material_group || '-';
+  return keyword ? `${keyword} 감지 -> ${group}\n${reason}` : `${group}\n${reason}`;
+}
+function setShot(imgId, emptyId, dataUrl){
+  const img = $(imgId);
+  const empty = $(emptyId);
+  if(!img || !empty) return;
+  if(typeof dataUrl === 'string' && dataUrl.startsWith('data:image')){
+    img.src = dataUrl;
+    img.style.display = 'block';
+    empty.style.display = 'none';
+    return;
+  }
+  img.removeAttribute('src');
+  img.style.display = 'none';
+  empty.style.display = 'inline';
+}
+function decisionSourceKo(source){
+  const map = {
+    cnn_agreement: 'CNN 일치 결과',
+    cnn_same_label_avg: 'CNN 일치 + 평균 신뢰도 기준',
+    cnn_family_consensus: 'CNN 계열 합의 기준',
+    cnn_average_fallback: 'CNN 평균 후보 기준',
+    cnn_fallback: 'CNN 단일 후보 보정',
+    cnn_fallback_after_openai_skip: 'API 실패 후 CNN 기준 유지',
+    openai_final: 'API 재판단 결과',
+    family_combo_adjusted: 'TOP3 계열 조합 보정',
+    feedback_adjusted: '학습 피드백 보정',
+    visual_pale_override: '흰색 계열 보수 보정'
+  };
+  return map[source] || source || '-';
+}
+function renderList(id, items){
+  const el = $(id);
+  el.innerHTML = '';
+  (items && items.length ? items : ['-']).forEach((text, idx)=>{
+    const li = document.createElement('li');
+    li.innerHTML = `<b>${idx + 1}</b> ${esc(text)}`;
+    el.appendChild(li);
+  });
+}
+async function loadState(){
+  try{
+    const res = await fetch(`/api/dev-state?ts=${Date.now()}`, {cache: 'no-store'});
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.state && Object.keys(data.state).length){
+        return data.state;
+      }
+    }
+  }catch(e){}
+  let state = {};
+  try{ state = JSON.parse(localStorage.getItem(KEY) || '{}'); }catch(e){ state = {}; }
+  return state;
+}
+async function render(){
+  const state = await loadState();
+  const a = state.latestAnalysis || {};
+  $('stageBadge').textContent = state.stage || '-';
+  $('finalLabel').textContent = a.final_label ? `${a.final_label_kr || a.final_label} (${a.final_label})` : '-';
+  $('decisionSource').textContent = decisionSourceKo(a.decision_source);
+  $('decisionSummary').textContent = a.decision_summary || '-';
+  $('confidence').textContent = a.confidence != null ? pct(a.confidence) : '-';
+  $('visualFamily').textContent = a.visual_family_display || a.visual_family || '-';
+  $('beforeCnn').textContent = a.cnn_before_class ? `${a.cnn_before_class} / ${pct(a.cnn_before_confidence)}` : '-';
+  $('afterCnn').textContent = a.cnn_after_class ? `${a.cnn_after_class} / ${pct(a.cnn_after_confidence)}` : '-';
+  $('materialGroup').textContent = a.material_group_display || a.material_group || '-';
+  $('materialReason').textContent = a.material_reason || '-';
+  $('ocrVerdict').textContent = buildOcrVerdict(a);
+  $('reaction').textContent = JSON.stringify(a.reaction_summary || {}, null, 2);
+  $('ocrPreview').textContent = (a.ocr_text_preview || []).join(' | ') || '-';
+  setShot('devBeforeShot', 'devBeforeShotEmpty', state.beforeImage);
+  setShot('devAfterShot', 'devAfterShotEmpty', state.afterImage);
+  setShot('devFeedbackShot', 'devFeedbackShotEmpty', state.feedbackImage);
+
+  $('topBody').innerHTML = (a.top_candidates || []).slice(0, 3).map((item, idx)=>`
+    <tr>
+      <td>TOP ${idx + 1}</td>
+      <td>${esc(item.label_kr || item.label)}<br><small>${esc(item.family_kr || item.family || '-')}</small></td>
+      <td>${esc(pct(item.score))}</td>
+      <td>${scoreCell(item.before_score)}</td>
+      <td>${scoreCell(item.after_score)}</td>
+    </tr>`).join('') || '<tr><td colspan="5">분석 결과 없음</td></tr>';
+
+  $('familyBody').innerHTML = (a.family_summary || []).map((family, idx)=>{
+    const members = (family.members || []).map(member => `${member.label_kr || member.label} ${pct(member.score)}`).join(', ');
+    return `<tr>
+      <td>${idx + 1}</td>
+      <td>${esc(family.family_kr || family.family)}</td>
+      <td>${esc(pct(family.score))}</td>
+      <td>${esc((Number(family.margin_to_next || 0) * 100).toFixed(1) + '%p')}</td>
+      <td>${esc(members || '-')}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="5">계열 정보 없음</td></tr>';
+
+  renderList('reasons', a.reason_kr || []);
+  $('logBox').innerHTML = (state.logs || []).slice(-30).map(line => `<div class="log-item">${esc(line)}</div>`).join('') || '<div class="log-item">로그 없음</div>';
+}
+window.addEventListener('storage', render);
+setInterval(render, 1500);
+render();
+</script>
+</body>
+</html>
