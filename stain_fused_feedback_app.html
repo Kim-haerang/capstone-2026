@@ -7390,21 +7390,15 @@ function setFinalPreview(imgEl, emptyEl, dataUrl){
   if(dataUrl){
     emptyEl.style.display = 'none';
     imgEl.style.display = 'block';
-
-    // 원본 먼저 표시
+    // 원본 비율 그대로 표시 (잘림 방지)
     imgEl.src = dataUrl;
-
-    // 최종 결과 화면에서는 이미지 내부 흰 여백을 캔버스로 실제 제거한 뒤 표시
-    cropWhiteMarginFromImage(dataUrl, function(croppedUrl){
-      imgEl.src = croppedUrl;
-      imgEl.style.display = 'block';
-      imgEl.style.width = '100%';
-      imgEl.style.height = '100%';
-      imgEl.style.maxWidth = 'none';
-      imgEl.style.objectFit = 'cover';
-      imgEl.style.objectPosition = 'center center';
-      imgEl.style.transform = 'none';
-    });
+    imgEl.style.width = '100%';
+    imgEl.style.height = '100%';
+    imgEl.style.maxWidth = '100%';
+    imgEl.style.maxHeight = '100%';
+    imgEl.style.objectFit = 'contain';
+    imgEl.style.objectPosition = 'center center';
+    imgEl.style.transform = 'none';
   }else{
     imgEl.src = '';
     imgEl.style.display = 'none';
@@ -14893,8 +14887,7 @@ body:has(#page-feedback.stage-page.active) #statusMsg {
 </style>
 
 <style id="codex-learning-feedback-fixed-position">
-  body:has(#page-review.active) .learning-feedback-open.show,
-  body:has(#page-final.active) .learning-feedback-open.show {
+  .learning-feedback-open.show {
     position: fixed !important;
     top: clamp(150px, 14vh, 220px) !important;
     right: clamp(28px, 3.5vw, 72px) !important;
@@ -14918,8 +14911,7 @@ body:has(#page-feedback.stage-page.active) #statusMsg {
   }
 
   @media (max-width: 760px) {
-    body:has(#page-review.active) .learning-feedback-open.show,
-    body:has(#page-final.active) .learning-feedback-open.show {
+    .learning-feedback-open.show {
       top: 118px !important;
       right: 14px !important;
       min-height: 42px !important;
@@ -14951,6 +14943,81 @@ body:has(#page-feedback.stage-page.active) #statusMsg {
   #page-feedback .action-row button {
     width: 100% !important;
     box-sizing: border-box !important;
+  }
+</style>
+
+<style id="codex-final-photo-no-crop-fix">
+  /* 분석 완료 이후 최종 결과 사진이 잘리지 않도록 전체 프레임을 표시 */
+  #page-final .final-photo-body {
+    background: #EAF4FB !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+
+  #page-final .final-photo-body img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    background: #EAF4FB !important;
+    transform: none !important;
+  }
+</style>
+
+<style id="codex-review-text-no-cut-fix">
+  /* 결과 확인 카드에서 판단 방식/선정 이유 텍스트 잘림 방지 */
+  #page-review .analysis-main-card,
+  #page-review .analysis-reason-card {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  #page-review .analysis-main-card .analysis-detail-list {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  #page-review .analysis-main-card .analysis-detail-list .chip {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) !important;
+    column-gap: 12px !important;
+    align-items: start !important;
+    min-height: 0 !important;
+    height: auto !important;
+    line-height: 1.35 !important;
+    white-space: normal !important;
+  }
+
+  #page-review .analysis-main-card .analysis-detail-list .chip span {
+    margin-left: 0 !important;
+    justify-self: end !important;
+    text-align: right !important;
+    white-space: normal !important;
+    word-break: keep-all !important;
+  }
+
+  #page-review .analysis-reason-card .list-box {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  #page-review .analysis-reason-card .reason-item,
+  #page-review .analysis-reason-card .list-item {
+    min-height: 0 !important;
+    height: auto !important;
+    align-items: flex-start !important;
+  }
+
+  #page-review .analysis-reason-card .reason-text {
+    overflow: visible !important;
+    white-space: normal !important;
+    word-break: keep-all !important;
+    line-height: 1.45 !important;
   }
 </style>
 
