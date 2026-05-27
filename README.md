@@ -39,7 +39,7 @@
 - 총 데이터: 약 36,000장
 - 배포: 라즈베리파이 환경 추론을 위해 TFLite 변환 후 사용
 
-### 판정 보정 및 세척 강도
+## 5. 판정 보정 및 세척 강도
 
 - 배경 보정: 흰색/회색/검정 배경과 연청/중청/진청 데님에서 촬영 밝기와 색상 왜곡이 달라질 수 있어, 중앙 얼룩 주변부의 배경 신호와 원단 정보를 함께 참고합니다.
 - 색상 보정: 어두운 배경에서 빨강이 갈색으로 보이거나, 밝기 변화로 노랑이 흰색 계열처럼 보이는 경우를 줄이기 위해 색상군 후보를 재검토합니다.
@@ -47,9 +47,9 @@
 - 세척 강도 결정: 오염원별 세제 종류와 원단 그룹(면/데님, 합성, 민감 원단, 니트)에 따라 펌프 시간, 브러시 강도, 브러시 횟수를 다르게 적용합니다.
 - 세척 후 평가: 세척 전후 이미지의 중앙 얼룩 영역 변화를 비교해 제거율을 계산하고, 추가 세척 여부를 안내합니다.
 
-## 5. 빠른 실행 방법
+## 6. 빠른 실행 방법
 
-### 5-1. Python 환경 준비
+### 6-1. Python 환경 준비
 
 ```bash
 python -m venv .venv
@@ -60,7 +60,7 @@ pip install fastapi uvicorn numpy opencv-python requests pydantic pytesseract py
 
 `RPi.GPIO`는 라즈베리파이에서만 설치/사용합니다.
 
-### 5-2. 모델 파일 위치 확인
+### 6-2. 모델 파일 위치 확인
 
 `tflite_server.py`는 기본적으로 아래 경로를 읽습니다.
 
@@ -75,7 +75,7 @@ move stain_classifier_v3.tflite models\stain_classifier_v3.tflite
 move class_names.txt models\class_names.txt
 ```
 
-### 5-3. 서버 실행
+### 6-3. 서버 실행
 
 터미널 1 (추론 서버):
 
@@ -89,7 +89,7 @@ uvicorn tflite_server:app --host 0.0.0.0 --port 9000
 uvicorn stain_backend_app:app --host 0.0.0.0 --port 8000
 ```
 
-### 5-4. 접속
+### 6-4. 접속
 
 - 메인 UI: `http://<장비IP>:8000/`
 - 개발자 UI: `http://<장비IP>:8000/developer`
@@ -97,7 +97,7 @@ uvicorn stain_backend_app:app --host 0.0.0.0 --port 8000
   - `http://<장비IP>:8000/api/health`
   - `http://<장비IP>:9000/health`
 
-## 6. 주요 API
+## 7. 주요 API
 
 - `POST /api/analyze-triplet`: 1차/2차 이미지 분석, 최종 오염원/세제/근거 산출
 - `POST /api/execute`: 세척 동작 실행(펌프/브러시)
@@ -106,7 +106,7 @@ uvicorn stain_backend_app:app --host 0.0.0.0 --port 8000
 - `GET /api/capture`: 프레임 캡처
 - `POST /api/learning-feedback`: 사용자 피드백 데이터 저장
 
-## 7. 환경 변수 (자주 쓰는 항목)
+## 8. 환경 변수 (자주 쓰는 항목)
 
 - `TFLITE_SERVER_URL` (기본: `http://127.0.0.1:9000`)
 - `CAMERA_INDEX`
