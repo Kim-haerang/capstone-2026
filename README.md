@@ -105,9 +105,3 @@ uvicorn stain_backend_app:app --host 0.0.0.0 --port 8000
 - `OPENAI_API_KEY`, `OPENAI_MODEL`
 - `ARDUINO_PORT`, `ARDUINO_BAUD`
 - `FEEDBACK_ADJUST_ENABLED`
-
-## 8. 참고
-
-- 하드웨어가 없는 환경에서도 API/UI 분석 흐름 테스트는 가능합니다.
-- 실제 세척 제어 테스트 시에는 포트 권한/배선/안전 설정을 먼저 확인해 주세요.
-
