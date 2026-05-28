@@ -6964,6 +6964,12 @@ function addLog(msg){
   persistDevState();
 }
 function setStatus(msg){ statusMsg.textContent = msg || ''; }
+function applyNoCropImageFit(imgEl){
+  if(!imgEl) return;
+  imgEl.style.setProperty('object-fit', 'contain', 'important');
+  imgEl.style.setProperty('object-position', 'center center', 'important');
+  imgEl.style.setProperty('transform', 'none', 'important');
+}
 function setPreview(imgEl, placeholderEl, dataUrl){
   if(imgEl){
     imgEl.onload = null;
@@ -6973,6 +6979,7 @@ function setPreview(imgEl, placeholderEl, dataUrl){
 
   if(dataUrl){
     imgEl.src = dataUrl;
+    applyNoCropImageFit(imgEl);
     imgEl.style.display = 'block';
     placeholderEl.style.display = 'none';
   } else {
@@ -7091,6 +7098,7 @@ async function startLiveOn(imgEl, placeholderEl, label, skipStepper=false){
   }
 
   if (cameraConnected && imgEl.src && imgEl.src.includes('/api/video_feed')) {
+    applyNoCropImageFit(imgEl);
     imgEl.style.display = 'block';
     placeholderEl.style.display = 'none';
     cameraBadge.textContent = '카메라 연결됨';
@@ -7103,6 +7111,7 @@ async function startLiveOn(imgEl, placeholderEl, label, skipStepper=false){
   const streamUrl = `${API_BASE}/api/video_feed?ts=${Date.now()}`;
   imgEl.onload = () => {
     cameraConnected = true;
+    applyNoCropImageFit(imgEl);
     imgEl.style.display = 'block';
     placeholderEl.style.display = 'none';
     cameraBadge.textContent = '카메라 연결됨';
@@ -15035,7 +15044,28 @@ body:has(#page-feedback.stage-page.active) #statusMsg {
 </style>
 
 <style id="codex-final-photo-contain-hard-override">
+  #page-final .final-photo-grid {
+    display: grid !important;
+    width: min(100%, 1180px) !important;
+    max-width: 1180px !important;
+    align-self: center !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    flex: none !important;
+  }
+
+  #page-final .final-photo-card {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
   #page-final .final-photo-body {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    aspect-ratio: 4 / 3 !important;
+    flex: none !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -15056,6 +15086,323 @@ body:has(#page-feedback.stage-page.active) #statusMsg {
     transform: none !important;
     transform-origin: center center !important;
     background: #EAF4FB !important;
+  }
+
+  @media (max-width: 760px) {
+    #page-final .final-photo-grid {
+      grid-template-columns: 1fr !important;
+      max-width: 420px !important;
+    }
+  }
+</style>
+
+<style id="codex-camera-preview-contain-hard-override">
+  #tagPreview,
+  #beforePreview,
+  #afterPreview,
+  #feedbackPreview {
+    object-fit: contain !important;
+    object-position: center center !important;
+    transform: none !important;
+    background: #EAF4FB !important;
+  }
+</style>
+
+<style id="codex-all-page-feedback-and-image-contain-final">
+  /* 요청 반영: 평가 버튼은 모든 화면에서 위쪽으로 띄우고, 모든 촬영/결과 사진은 잘림 없이 표시 */
+  .learning-feedback-open.show {
+    position: fixed !important;
+    top: clamp(174px, 17vh, 250px) !important;
+    right: clamp(20px, 3vw, 64px) !important;
+    bottom: auto !important;
+    left: auto !important;
+    z-index: 180 !important;
+  }
+
+  body:has(.stage-page.active) .learning-feedback-panel.show {
+    position: fixed !important;
+    top: clamp(224px, 23vh, 330px) !important;
+    right: clamp(18px, 2.6vw, 48px) !important;
+    bottom: auto !important;
+    left: auto !important;
+    max-height: calc(100vh - clamp(246px, 27vh, 370px)) !important;
+    z-index: 181 !important;
+  }
+
+  #tagPreview,
+  #beforePreview,
+  #afterPreview,
+  #feedbackPreview,
+  #finalBeforeImg,
+  #finalAfterImg,
+  #finalFeedbackImg,
+  .camera-frame img,
+  .capture-body img,
+  .final-photo-body img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    transform: none !important;
+    transform-origin: center center !important;
+    background: #EAF4FB !important;
+  }
+
+  .camera-frame,
+  .capture-body,
+  .final-photo-body {
+    background: #EAF4FB !important;
+  }
+
+  #page-final .final-photo-body {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    aspect-ratio: 4 / 3 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+
+  #page-final .final-photo-body img:not([src]),
+  #page-final .final-photo-body img[src=""],
+  .camera-frame img:not([src]),
+  .camera-frame img[src=""] {
+    display: none !important;
+  }
+
+  @media (orientation: landscape) and (min-width: 900px) {
+    body:has(#page-review.active) .learning-feedback-open.show,
+    body:has(#page-final.active) .learning-feedback-open.show {
+      top: clamp(184px, 16vh, 260px) !important;
+    }
+
+    body:has(#page-review.active) .learning-feedback-panel.show,
+    body:has(#page-final.active) .learning-feedback-panel.show {
+      top: clamp(238px, 22vh, 330px) !important;
+      max-height: calc(100vh - clamp(262px, 26vh, 370px)) !important;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .learning-feedback-open.show {
+      top: 96px !important;
+      right: 12px !important;
+      min-height: 40px !important;
+      padding: 0 14px !important;
+    }
+
+    body:has(.stage-page.active) .learning-feedback-panel.show {
+      top: 144px !important;
+      right: 12px !important;
+      width: min(620px, calc(100vw - 24px)) !important;
+      max-height: calc(100vh - 160px) !important;
+    }
+  }
+</style>
+
+<style id="codex-ipad-landscape-feedback-image-lock">
+  /* iPad Safari 가로 화면 최종 잠금: 우측 평가 버튼과 모든 사진 비율 보정 */
+  @media (orientation: landscape) and (min-width: 900px) and (max-width: 1400px) {
+    .learning-feedback-open.show {
+      top: calc(env(safe-area-inset-top, 0px) + 150px) !important;
+      right: 34px !important;
+      bottom: auto !important;
+      left: auto !important;
+      z-index: 220 !important;
+      min-height: 46px !important;
+      padding: 0 22px !important;
+    }
+
+    body:has(.stage-page.active) .learning-feedback-panel.show {
+      top: calc(env(safe-area-inset-top, 0px) + 204px) !important;
+      right: 24px !important;
+      bottom: auto !important;
+      left: auto !important;
+      max-height: calc(100vh - 232px) !important;
+      z-index: 221 !important;
+    }
+
+    #tagPreview,
+    #beforePreview,
+    #afterPreview,
+    #feedbackPreview,
+    #finalBeforeImg,
+    #finalAfterImg,
+    #finalFeedbackImg,
+    .camera-frame img,
+    .capture-body img,
+    .final-photo-body img {
+      object-fit: contain !important;
+      object-position: center center !important;
+      transform: none !important;
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+    }
+
+    #page-final .final-photo-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+      align-items: stretch !important;
+    }
+
+    #page-final .final-photo-body {
+      aspect-ratio: 4 / 3 !important;
+      height: auto !important;
+      max-height: none !important;
+    }
+  }
+</style>
+
+<style id="codex-ipad-final-visible-photo-and-feedback-up">
+  /* iPad Safari 가로 화면: 평가 UI를 더 위로, 최종 사진 3장을 화면 안에 완전히 표시 */
+  @media (orientation: landscape) and (min-width: 900px) and (max-width: 1400px) {
+    .learning-feedback-open.show,
+    body:has(#page-review.active) .learning-feedback-open.show,
+    body:has(#page-final.active) .learning-feedback-open.show {
+      top: calc(env(safe-area-inset-top, 0px) + 128px) !important;
+      right: 34px !important;
+      bottom: auto !important;
+      z-index: 260 !important;
+    }
+
+    body:has(.stage-page.active) .learning-feedback-panel.show,
+    body:has(#page-review.active) .learning-feedback-panel.show,
+    body:has(#page-final.active) .learning-feedback-panel.show {
+      top: calc(env(safe-area-inset-top, 0px) + 142px) !important;
+      right: 24px !important;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 64px) !important;
+      max-height: none !important;
+      overflow: auto !important;
+      z-index: 261 !important;
+    }
+
+    #page-final.stage-page.active {
+      padding-top: 12px !important;
+      padding-bottom: 4px !important;
+      gap: 0 !important;
+      overflow: hidden !important;
+    }
+
+    #page-final .screen-title {
+      font-size: 32px !important;
+      line-height: 1.05 !important;
+      margin: 0 0 4px !important;
+    }
+
+    #page-final .screen-sub {
+      font-size: 13px !important;
+      line-height: 1.25 !important;
+      margin: 0 0 8px !important;
+    }
+
+    #page-final .final-summary {
+      padding: 10px 16px !important;
+      border-radius: 20px !important;
+      margin: 0 0 8px !important;
+      min-height: 0 !important;
+      max-height: 170px !important;
+      overflow: hidden !important;
+      flex: 0 0 auto !important;
+    }
+
+    #page-final .final-summary .result-title {
+      font-size: 12px !important;
+      margin-bottom: 5px !important;
+    }
+
+    #page-final #finalRemovalMain {
+      font-size: 30px !important;
+      line-height: 1.04 !important;
+      margin-bottom: 4px !important;
+    }
+
+    #page-final #finalStatusMain {
+      font-size: 13px !important;
+      line-height: 1.22 !important;
+      margin-bottom: 5px !important;
+    }
+
+    #page-final #finalCommentMain {
+      gap: 5px !important;
+    }
+
+    #page-final #finalCommentMain .list-item {
+      font-size: 12px !important;
+      line-height: 1.25 !important;
+      padding: 5px 10px !important;
+      min-height: 0 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    #page-final .final-rewash-btn {
+      height: 50px !important;
+      min-width: 166px !important;
+      font-size: 15px !important;
+      border-radius: 17px !important;
+    }
+
+    #page-final .final-photo-grid {
+      flex: 0 0 auto !important;
+      height: 210px !important;
+      height: clamp(178px, 27vh, 230px) !important;
+      height: clamp(178px, 27svh, 230px) !important;
+      min-height: 0 !important;
+      max-height: 230px !important;
+      margin-top: 0 !important;
+      gap: 10px !important;
+      align-items: stretch !important;
+      overflow: visible !important;
+    }
+
+    #page-final .final-photo-card {
+      height: 100% !important;
+      min-height: 0 !important;
+      max-height: 230px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
+    }
+
+    #page-final .final-photo-head {
+      flex: 0 0 auto !important;
+      padding: 7px 10px !important;
+      font-size: 12px !important;
+      line-height: 1.15 !important;
+    }
+
+    #page-final .final-photo-body {
+      flex: 1 1 auto !important;
+      width: 100% !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      aspect-ratio: auto !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      overflow: hidden !important;
+      background: #EAF4FB !important;
+    }
+
+    #page-final .final-photo-body img {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      object-fit: contain !important;
+      object-position: center center !important;
+      transform: none !important;
+      background: #EAF4FB !important;
+    }
   }
 </style>
 
