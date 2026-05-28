@@ -7392,13 +7392,13 @@ function setFinalPreview(imgEl, emptyEl, dataUrl){
     imgEl.style.display = 'block';
     // 원본 비율 그대로 표시 (잘림 방지)
     imgEl.src = dataUrl;
-    imgEl.style.width = '100%';
-    imgEl.style.height = '100%';
-    imgEl.style.maxWidth = '100%';
-    imgEl.style.maxHeight = '100%';
-    imgEl.style.objectFit = 'contain';
-    imgEl.style.objectPosition = 'center center';
-    imgEl.style.transform = 'none';
+    imgEl.style.setProperty('width', '100%', 'important');
+    imgEl.style.setProperty('height', '100%', 'important');
+    imgEl.style.setProperty('max-width', '100%', 'important');
+    imgEl.style.setProperty('max-height', '100%', 'important');
+    imgEl.style.setProperty('object-fit', 'contain', 'important');
+    imgEl.style.setProperty('object-position', 'center center', 'important');
+    imgEl.style.setProperty('transform', 'none', 'important');
   }else{
     imgEl.src = '';
     imgEl.style.display = 'none';
@@ -14686,7 +14686,9 @@ body:has(#page-feedback.stage-page.active) #statusMsg {
     const panel = $('learningFeedbackPanel');
     const openBtn = $('learningOpenBtn');
     if (!panel || !openBtn) return;
-    openBtn.classList.toggle('show', learningPanelHasData && !panel.classList.contains('show'));
+    const canShowOnStage = state?.stage === 'review' || state?.stage === 'final';
+    const hasAnalysisForFeedback = learningPanelHasData || !!state?.latestAnalysis;
+    openBtn.classList.toggle('show', canShowOnStage && hasAnalysisForFeedback && !panel.classList.contains('show'));
   }
 
   function renderLearningCandidateScores(data){
@@ -14853,10 +14855,21 @@ body:has(#page-feedback.stage-page.active) #statusMsg {
     showLearningPanel(data);
   };
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', ensureLearningPanel);
-  } else {
+  const originalRenderStageForLearning = renderStage;
+  renderStage = function(){
+    originalRenderStageForLearning();
+    syncLearningPanelToggle();
+  };
+
+  function initLearningPanel(){
     ensureLearningPanel();
+    syncLearningPanelToggle();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLearningPanel);
+  } else {
+    initLearningPanel();
   }
 })();
 </script>
@@ -15018,6 +15031,31 @@ body:has(#page-feedback.stage-page.active) #statusMsg {
     white-space: normal !important;
     word-break: keep-all !important;
     line-height: 1.45 !important;
+  }
+</style>
+
+<style id="codex-final-photo-contain-hard-override">
+  #page-final .final-photo-body {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    background: #EAF4FB !important;
+  }
+
+  #page-final #finalBeforeImg,
+  #page-final #finalAfterImg,
+  #page-final #finalFeedbackImg {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    transform: none !important;
+    transform-origin: center center !important;
+    background: #EAF4FB !important;
   }
 </style>
 

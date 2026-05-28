@@ -167,6 +167,11 @@ function setShot(imgId, emptyId, dataUrl){
   if(typeof dataUrl === 'string' && dataUrl.startsWith('data:image')){
     img.src = dataUrl;
     img.style.display = 'block';
+    img.style.setProperty('width', '100%', 'important');
+    img.style.setProperty('height', '100%', 'important');
+    img.style.setProperty('object-fit', 'contain', 'important');
+    img.style.setProperty('object-position', 'center center', 'important');
+    img.style.setProperty('transform', 'none', 'important');
     empty.style.display = 'none';
     return;
   }
