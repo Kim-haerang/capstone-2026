@@ -122,3 +122,7 @@ uvicorn stain_backend_app:app --host 0.0.0.0 --port 8000
 - `OPENAI_API_KEY`, `OPENAI_MODEL`
 - `ARDUINO_PORT`, `ARDUINO_BAUD`
 - `FEEDBACK_ADJUST_ENABLED`
+
+## 9. 시연 영상
+- youtube.com/watch?v=ilmVzH4CYjw&feature=youtu.be
+- https://www.youtube.com/watch?v=g3_SdDI3nyY&feature=youtu.be
