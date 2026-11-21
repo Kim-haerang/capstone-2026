@@ -27,8 +27,10 @@
 - `stain_fused_feedback_dev.html`: 개발자 UI
 - `stain_classifier_v3.tflite`: 학습된 분류 모델
 - `class_names.txt`: 클래스 이름 매핑
-- `dev_state_latest.json`: 개발 상태 저장 데이터
 - `mobilenet_v1.py`: 모델 관련 코드(학습/구조 참고용)
+- `stain_cleaner_controller.ino`: Arduino의 Serial 명령 처리, 스텝모터·펌프·수중모터 제어
+- `accuracy_test_results.pdf`: 분류 평가 자료
+- `docs/capstone_panel.pdf`: 프로젝트 판넬
 
 ## 4. 데이터셋/모델 개요
 
@@ -60,7 +62,7 @@
 
 ### 6-1. Python 환경 준비
 
-```bash
+```powershell
 python -m venv .venv
 .venv\Scripts\activate
 pip install --upgrade pip
@@ -76,12 +78,12 @@ pip install fastapi uvicorn numpy opencv-python requests pydantic pytesseract py
 - `models/stain_classifier_v3.tflite`
 - `models/class_names.txt`
 
-현재 저장소 루트에 모델 파일이 있다면, 실행 전에 `models` 폴더를 만들고 옮겨 주세요.
+저장소의 모델과 클래스 파일은 루트에 있습니다. 실행 전에 아래 PowerShell 명령으로 `models/`에 복사합니다. 원본 파일은 그대로 유지합니다.
 
-```bash
-mkdir models
-move stain_classifier_v3.tflite models\stain_classifier_v3.tflite
-move class_names.txt models\class_names.txt
+```powershell
+New-Item -ItemType Directory -Force models | Out-Null
+Copy-Item stain_classifier_v3.tflite models/
+Copy-Item class_names.txt models/
 ```
 
 ### 6-3. 서버 실행
@@ -124,5 +126,6 @@ uvicorn stain_backend_app:app --host 0.0.0.0 --port 8000
 - `FEEDBACK_ADJUST_ENABLED`
 
 ## 9. 시연 영상
-- https://www.youtube.com/watch?v=ilmVzH4CYjw&feature=youtu.be
-- https://www.youtube.com/watch?v=g3_SdDI3nyY&feature=youtu.be
+
+- [시연 영상 1](https://www.youtube.com/watch?v=ilmVzH4CYjw)
+- [시연 영상 2](https://www.youtube.com/watch?v=g3_SdDI3nyY)
