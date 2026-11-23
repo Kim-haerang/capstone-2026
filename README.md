@@ -3,6 +3,36 @@
 얼룩 이미지를 분류하고(모델 추론), 원단/색상 맥락을 함께 반영해 세제 및 세척 동작을 추천/실행하는 프로젝트입니다.  
 웹 UI + FastAPI 백엔드 + TFLite 추론 서버 구조로 구성되어 있습니다.
 
+## 시스템 구성과 제어 흐름
+
+```mermaid
+flowchart LR
+    Camera[카메라] --> Backend[FastAPI 백엔드]
+    UI[사용자 웹 UI] --> Backend
+    Backend -->|이미지 분석 요청| Model[TFLite 추론 서버]
+    Model -->|분류 결과와 후보| Backend
+    Backend -->|판별 결과와 세척 계획| UI
+    UI -->|세척 실행 요청| Backend
+    Backend -->|Serial 명령| Arduino[Arduino]
+    Arduino --> Pump[세제 펌프와 수중모터]
+    Arduino --> Stepper[스텝모터]
+    UI -->|판별 수정과 평가| Backend
+```
+
+사용자는 촬영한 이미지의 판별 결과를 확인하고 세척을 요청합니다. 백엔드는 추론 결과와 원단 정보를 바탕으로 세척 계획을 산출하며, Arduino에 줄바꿈으로 구분한 Serial 명령을 전송합니다. Arduino 코드는 명령을 받아 펌프와 모터의 출력 및 동작 시간을 제어합니다.
+
+### 코드에서 확인할 부분
+
+| 구현 | 파일 | 확인할 내용 |
+| --- | --- | --- |
+| 분류 모델 호출과 결과 보정 | `stain_backend_app.py` | 추론 서버 응답과 원단·색상 조건을 최종 판정에 반영하는 흐름 |
+| 이미지 전처리와 추론 | `tflite_server.py` | 224×224 크기 변환, RGB 변환, 정규화, TFLite 호출 |
+| 사용자 판별 피드백 | `stain_backend_app.py`, `stain_fused_feedback_app.html` | 판별 수정과 피드백 저장 |
+| 장치 명령 전달 | `stain_backend_app.py` | Serial 연결과 명령 전송, `/api/execute` 처리 |
+| 펌프·모터 제어 | `stain_cleaner_controller.ino` | 명령 해석, 펌프 출력, 스텝모터 STEP/DIR 제어 |
+
+이미지 기반 제거율은 세척 전후 영상 비교로 산출한 지표입니다. 분류 평가 자료와 실제 장치 동작은 아래 평가 파일 및 시연 영상에서 확인할 수 있습니다.
+
 ## 1. 핵심 기능
 
 - 얼룩 분류: MobileNet 기반 CNN(TFLite)으로 오염원 분류
